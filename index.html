@@ -42,6 +42,14 @@
   }
 
   * { box-sizing: border-box; }
+  /* Without this, [hidden] loses the cascade to any element's own
+     display:flex/grid class of equal specificity (found via an actual
+     render test, 2026-09-08 -- .example-banner{display:flex} was
+     silently overriding [hidden]{display:none} and showing the banner
+     even with the hidden attribute correctly set in the DOM). Artifact
+     publishing injects this automatically; a plain static file like
+     this one does not, so it needs to be explicit. */
+  [hidden] { display: none !important; }
   body {
     margin: 0;
     background: var(--bg);
@@ -67,6 +75,8 @@
   }
   .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); }
   .pill.live .dot { background: var(--good); box-shadow: 0 0 0 3px color-mix(in srgb, var(--good) 25%, transparent); }
+  .pill.stale { border-color: var(--critical); color: var(--critical); font-weight: 700; }
+  .pill.stale .dot { background: var(--critical); box-shadow: 0 0 0 3px color-mix(in srgb, var(--critical) 25%, transparent); }
   .synced-at { font-size: 12px; color: var(--text-muted); }
 
   .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 16px; }
@@ -160,7 +170,7 @@
     </div>
     <div class="status-block">
       <span class="pill" id="statusPill"><span class="dot"></span><span id="statusText">Checking&hellip;</span></span>
-      <span class="synced-at mono" id="syncedAt">generated 2026-09-08 14:20</span>
+      <span class="synced-at mono" id="syncedAt">generated 2026-09-08 14:27</span>
     </div>
   </header>
 
@@ -434,11 +444,24 @@
       </svg>`;
   }
 
+  const GENERATED_AT_ISO = '2026-09-08T14:27:24.200800';
+  const STALE_HOURS = 36;  // run_daily.py runs once a day -- this allows one missed day before flagging, catches two
+
   const statusPill = document.getElementById('statusPill');
   const statusText = document.getElementById('statusText');
   if (EMBEDDED_PICKS.length) {
-    statusPill.classList.add('live');
-    statusText.textContent = 'Live season data';
+    const hoursSinceGenerated = (Date.now() - new Date(GENERATED_AT_ISO)) / 3.6e6;
+    if (hoursSinceGenerated > STALE_HOURS) {
+      // The automation may have silently stopped -- this is the one
+      // thing on the page meant to be checked without having to remember
+      // to look at daily_run_log.log. No live viewers besides the owner
+      // right now, so a blunt warning here is fine.
+      statusPill.classList.add('stale');
+      statusText.textContent = `⚠ Not updated in ${Math.floor(hoursSinceGenerated / 24)}+ day(s)`;
+    } else {
+      statusPill.classList.add('live');
+      statusText.textContent = 'Live season data';
+    }
     render(EMBEDDED_PICKS, false);
   } else {
     statusText.textContent = 'Season not started';
