@@ -160,7 +160,7 @@
     </div>
     <div class="status-block">
       <span class="pill" id="statusPill"><span class="dot"></span><span id="statusText">Checking&hellip;</span></span>
-      <span class="synced-at mono" id="syncedAt">generated 2026-09-08 14:16</span>
+      <span class="synced-at mono" id="syncedAt">generated 2026-09-08 14:19</span>
     </div>
   </header>
 
@@ -200,6 +200,11 @@
   <div class="highlight-banner" id="highlightBanner" hidden>
     <span class="highlight-icon">🔥</span>
     <span>Best pick this season: <strong id="highlightText"></strong></span>
+  </div>
+
+  <div class="highlight-banner" id="formBanner" hidden>
+    <span class="highlight-icon">📈</span>
+    <span>Last 10 picks: <strong id="formText"></strong></span>
   </div>
 
   <div class="main-grid">
@@ -332,6 +337,17 @@
       streakEl.className = 'num mono';
     }
 
+    // Longest WINNING streak of the season (day-based, same rule as the
+    // current streak above) -- survives a rough patch, still worth
+    // bragging about even mid-slump.
+    let longestWin = 0, run = 0;
+    for (const r of [...dayResults].reverse()) {  // chronological order for a true running max
+      if (r === 'WIN') { run++; longestWin = Math.max(longestWin, run); }
+      else run = 0;
+    }
+    document.getElementById('statStreakSub').textContent =
+      longestWin > 1 ? `current run · best: W${longestWin}` : 'current run';
+
     // Best single pick -- highest-profit graded WIN, for the highlight banner.
     const wins_list = graded.filter(p => p.status === 'WIN');
     const banner = document.getElementById('highlightBanner');
@@ -343,6 +359,24 @@
       banner.hidden = false;
     } else {
       banner.hidden = true;
+    }
+
+    // Recent form -- last 10 GRADED picks by date (not last 10 rows in
+    // insertion order), distinct from the season-long record so a slow
+    // patch late in a long season doesn't hide behind an otherwise-good
+    // overall number, and a hot patch is visible even during an overall
+    // rough season.
+    const formBanner = document.getElementById('formBanner');
+    const gradedSorted = [...graded].sort((a, b) => b.date.localeCompare(a.date));
+    const last10 = gradedSorted.slice(0, 10);
+    if (last10.length >= 5) {
+      const w = last10.filter(p => p.status === 'WIN').length;
+      const l = last10.filter(p => p.status === 'LOSS').length;
+      const psh = last10.filter(p => p.status === 'PUSH').length;
+      document.getElementById('formText').textContent = `${w}-${l}${psh ? `-${psh}` : ''} (last ${last10.length})`;
+      formBanner.hidden = false;
+    } else {
+      formBanner.hidden = true;
     }
 
     const latestDate = sorted.length ? sorted[sorted.length - 1].date : null;
