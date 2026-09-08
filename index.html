@@ -160,7 +160,7 @@
     </div>
     <div class="status-block">
       <span class="pill" id="statusPill"><span class="dot"></span><span id="statusText">Checking&hellip;</span></span>
-      <span class="synced-at mono" id="syncedAt">generated 2026-09-08 14:19</span>
+      <span class="synced-at mono" id="syncedAt">generated 2026-09-08 14:20</span>
     </div>
   </header>
 
@@ -204,7 +204,7 @@
 
   <div class="highlight-banner" id="formBanner" hidden>
     <span class="highlight-icon">📈</span>
-    <span>Last 10 picks: <strong id="formText"></strong></span>
+    <span id="formLabel">Recent form: <strong id="formText"></strong></span>
   </div>
 
   <div class="main-grid">
@@ -373,7 +373,8 @@
       const w = last10.filter(p => p.status === 'WIN').length;
       const l = last10.filter(p => p.status === 'LOSS').length;
       const psh = last10.filter(p => p.status === 'PUSH').length;
-      document.getElementById('formText').textContent = `${w}-${l}${psh ? `-${psh}` : ''} (last ${last10.length})`;
+      document.getElementById('formLabel').firstChild.textContent = `Last ${last10.length} pick${last10.length === 1 ? '' : 's'}: `;
+      document.getElementById('formText').textContent = `${w}-${l}${psh ? `-${psh}` : ''}`;
       formBanner.hidden = false;
     } else {
       formBanner.hidden = true;
