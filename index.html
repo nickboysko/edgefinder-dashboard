@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Locked Rule Tracker</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f3f5f8;
+    --surface: #ffffff;
+    --surface-2: #eaeef5;
+    --line: #dfe4ee;
+    --text-primary: #12172a;
+    --text-secondary: #4c5568;
+    --text-muted: #8791a3;
+    --accent: #b8791f;
+    --accent-ink: #ffffff;
+    --good: #1f9e82;
+    --critical: #e0503c;
+    --neutral-status: #4f6bb0;
+    --shadow: 0 1px 2px rgba(18,23,42,0.06), 0 8px 24px -12px rgba(18,23,42,0.14);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1320;
+      --surface: #171e2e;
+      --surface-2: #1e2637;
+      --line: rgba(255,255,255,0.09);
+      --text-primary: #eef1f8;
+      --text-secondary: #a9b2c6;
+      --text-muted: #6d7691;
+      --accent: #d9a441;
+      --accent-ink: #14100a;
+      --good: #34b895;
+      --critical: #ef6b58;
+      --neutral-status: #7893d6;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: "Barlow", system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  img { max-width: 100%; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 64px; }
+
+  .display { font-family: "Barlow Condensed", "Barlow", sans-serif; font-weight: 700; letter-spacing: 0.01em; text-wrap: balance; }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  .eyebrow { font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+
+  header.top { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: 26px; }
+  .brand h1 { font-size: 34px; line-height: 1.05; margin: 2px 0 6px; }
+  .brand p { margin: 0; color: var(--text-secondary); font-size: 14.5px; max-width: 46ch; }
+  .status-block { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600;
+    border: 1px solid var(--line); background: var(--surface); color: var(--text-secondary);
+  }
+  .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); }
+  .pill.live .dot { background: var(--good); box-shadow: 0 0 0 3px color-mix(in srgb, var(--good) 25%, transparent); }
+  .synced-at { font-size: 12px; color: var(--text-muted); }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px; }
+  .tile {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px 18px; box-shadow: var(--shadow);
+  }
+  .tile .eyebrow { margin-bottom: 8px; }
+  .tile .num { font-size: 30px; line-height: 1; }
+  .tile .sub { font-size: 12.5px; color: var(--text-secondary); margin-top: 6px; }
+  .tile .num.good { color: var(--good); }
+  .tile .num.critical { color: var(--critical); }
+
+  .main-grid { display: grid; grid-template-columns: 1.05fr 1.4fr; gap: 16px; margin-bottom: 16px; align-items: stretch; }
+  .panel {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    box-shadow: var(--shadow); display: flex; flex-direction: column; overflow: hidden;
+  }
+  .panel-head { padding: 16px 18px 12px; border-bottom: 1px solid var(--line); display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .panel-head h2 { font-size: 19px; margin: 0; }
+  .panel-head .count { font-size: 12.5px; color: var(--text-muted); }
+  .panel-body { padding: 14px 18px 18px; flex: 1; display: flex; flex-direction: column; min-height: 0; }
+
+  .pick-list { display: flex; flex-direction: column; gap: 10px; }
+  .pick-card { border: 1px solid var(--line); border-radius: 9px; padding: 12px 14px; background: var(--surface-2); }
+  .pick-card .matchup { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .pick-card .line { display: flex; justify-content: space-between; align-items: baseline; font-size: 12.5px; color: var(--text-secondary); }
+  .pick-card .spread { color: var(--accent); font-weight: 600; }
+
+  .chart-wrap { flex: 1; display: flex; flex-direction: column; min-height: 220px; }
+  svg.chart { width: 100%; height: 100%; overflow: visible; }
+  .chart-empty { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--text-muted); font-size: 13.5px; padding: 20px; }
+
+  .table-wrap { overflow-x: auto; }
+  table.history { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 640px; }
+  table.history th {
+    text-align: left; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--text-muted); font-weight: 600; padding: 8px 12px; border-bottom: 1px solid var(--line);
+    background: var(--surface-2); position: sticky; top: 0;
+  }
+  table.history td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  table.history tr:last-child td { border-bottom: none; }
+  table.history .num-cell { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+  .status-chip {
+    display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 6px;
+    font-size: 11.5px; font-weight: 600; letter-spacing: 0.02em;
+  }
+  .status-chip.win { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
+  .status-chip.loss { color: var(--critical); background: color-mix(in srgb, var(--critical) 14%, transparent); }
+  .status-chip.push { color: var(--neutral-status); background: color-mix(in srgb, var(--neutral-status) 14%, transparent); }
+  .status-chip.pending { color: var(--text-muted); background: var(--surface-2); }
+
+  .example-banner {
+    display: flex; align-items: center; gap: 10px; background: var(--surface-2);
+    border: 1px dashed var(--line); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;
+    font-size: 13.5px; color: var(--text-secondary);
+  }
+  .example-banner strong { color: var(--text-primary); }
+  .example-tag {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--accent-ink); background: var(--accent); padding: 2px 7px; border-radius: 4px;
+  }
+
+  footer.foot { margin-top: 22px; font-size: 12px; color: var(--text-muted); text-align: center; }
+
+  @media (max-width: 860px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .main-grid { grid-template-columns: 1fr; }
+    header.top { align-items: flex-start; }
+    .status-block { align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <p class="eyebrow">College Basketball &middot; Spread Model</p>
+      <h1 class="display">Locked Rule Tracker</h1>
+      <p>Bets flagged where the model's predicted margin disagrees with the closing spread by more than 4 points &mdash; the one rule this project has validated on genuinely out-of-sample data.</p>
+    </div>
+    <div class="status-block">
+      <span class="pill" id="statusPill"><span class="dot"></span><span id="statusText">Checking&hellip;</span></span>
+      <span class="synced-at mono" id="syncedAt">generated 2026-09-08 13:40</span>
+    </div>
+  </header>
+
+  <div id="exampleBanner" class="example-banner" hidden>
+    <span class="example-tag">Example</span>
+    <span>No real picks yet &mdash; <strong>the 2026-27 season hasn't tipped off.</strong> The layout below shows what this page will look like once results start coming in.</span>
+  </div>
+
+  <section class="stats">
+    <div class="tile">
+      <div class="eyebrow">Record</div>
+      <div class="num mono" id="statRecord">&mdash;</div>
+      <div class="sub">win&#8211;loss&#8211;push</div>
+    </div>
+    <div class="tile">
+      <div class="eyebrow">ROI</div>
+      <div class="num mono" id="statRoi">&mdash;</div>
+      <div class="sub">on units staked</div>
+    </div>
+    <div class="tile">
+      <div class="eyebrow">Bankroll</div>
+      <div class="num mono" id="statBankroll">&mdash;</div>
+      <div class="sub">at 1% of bankroll per unit</div>
+    </div>
+    <div class="tile">
+      <div class="eyebrow">Tracking since</div>
+      <div class="num mono" id="statSince">&mdash;</div>
+      <div class="sub">first graded pick</div>
+    </div>
+  </section>
+
+  <div class="main-grid">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Today&rsquo;s Picks</h2>
+        <span class="count" id="todayCount">0 games</span>
+      </div>
+      <div class="panel-body">
+        <div class="pick-list" id="pickList"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Profit Curve</h2>
+        <span class="count" id="chartCount">0 graded picks</span>
+      </div>
+      <div class="panel-body chart-wrap" id="chartWrap"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h2>History</h2>
+      <span class="count" id="historyCount">0 rows</span>
+    </div>
+    <div class="panel-body table-wrap">
+      <table class="history">
+        <thead>
+          <tr>
+            <th>Date</th><th>Matchup</th><th>Pick</th><th>Disagreement</th><th>Stake</th><th>Result</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer class="foot">
+    Regenerated automatically by the local pipeline &mdash; always reflects the latest run of run_daily.py, no manual sync needed.
+  </footer>
+</div>
+
+<script>
+(function () {
+  // Embedded at generation time by build_dashboard.py -- this page has no
+  // live data source of its own (unlike the earlier Claude-Artifact
+  // version), by design: it needs to work with zero dependency on any
+  // Claude session being available, since that's not guaranteed once the
+  // season starts. Every run of run_daily.py regenerates this file fresh.
+  const EMBEDDED_PICKS = [];
+
+  const EXAMPLE_PICKS = [
+    { date: '2026-11-18', team: 'Colorado St.', opp: 'Arizona', spread: 6.5, disagreement: 5.1, pick: 'Colorado St.', pick_spread: 6.5, stake_units: 1.55, status: 'WIN', actual_result: 'Colorado St. 74 - Arizona 71' },
+    { date: '2026-11-18', team: 'Providence', opp: 'VCU', spread: -3.0, disagreement: -4.8, pick: 'VCU', pick_spread: 3.0, stake_units: 1.4, status: 'LOSS', actual_result: 'Providence 68 - VCU 60' },
+    { date: '2026-11-15', team: 'Dayton', opp: 'Northwestern', spread: -2.5, disagreement: 4.3, pick: 'Dayton', pick_spread: -2.5, stake_units: 1.15, status: 'WIN', actual_result: 'Dayton 79 - Northwestern 70' },
+    { date: '2026-11-12', team: 'Murray St.', opp: 'Wisconsin', spread: 9.5, disagreement: 5.6, pick: 'Murray St.', pick_spread: 9.5, stake_units: 1.6, status: 'PUSH', actual_result: 'Murray St. 71 - Wisconsin 80' },
+  ];
+
+  const fmtDate = (iso) => {
+    const d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+  const fmtSpread = (n) => (n > 0 ? '+' : '') + n.toFixed(1);
+  const profitOf = (p) => {
+    if (p.status === 'WIN') return (p.stake_units || 1) * (100 / 110);
+    if (p.status === 'LOSS') return -(p.stake_units || 1);
+    return 0;
+  };
+  const statusChip = (s) => {
+    const map = { WIN: ['win', 'WIN'], LOSS: ['loss', 'LOSS'], PUSH: ['push', 'PUSH'], PENDING: ['pending', 'PENDING'] };
+    const [cls, label] = map[s] || map.PENDING;
+    return `<span class="status-chip ${cls}">${label}</span>`;
+  };
+
+  function render(picks, isExample) {
+    document.getElementById('exampleBanner').hidden = !isExample;
+
+    const graded = picks.filter(p => p.status === 'WIN' || p.status === 'LOSS' || p.status === 'PUSH');
+    const wins = graded.filter(p => p.status === 'WIN').length;
+    const losses = graded.filter(p => p.status === 'LOSS').length;
+    const pushes = graded.filter(p => p.status === 'PUSH').length;
+    const staked = graded.reduce((s, p) => s + (p.stake_units || 1), 0);
+    const profit = graded.reduce((s, p) => s + profitOf(p), 0);
+    const roi = staked ? (profit / staked) * 100 : null;
+    const bankrollMult = 1 + (profit * 0.01);
+
+    document.getElementById('statRecord').textContent = graded.length ? `${wins}-${losses}-${pushes}` : '—';
+    document.getElementById('statRoi').textContent = roi === null ? '—' : `${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%`;
+    document.getElementById('statRoi').className = 'num mono' + (roi === null ? '' : roi >= 0 ? ' good' : ' critical');
+    document.getElementById('statBankroll').textContent = graded.length ? `${bankrollMult.toFixed(2)}x` : '—';
+    document.getElementById('statBankroll').className = 'num mono' + (graded.length ? (bankrollMult >= 1 ? ' good' : ' critical') : '');
+    const sorted = [...picks].sort((a, b) => a.date.localeCompare(b.date));
+    document.getElementById('statSince').textContent = sorted.length ? fmtDate(sorted[0].date) : '—';
+
+    const latestDate = sorted.length ? sorted[sorted.length - 1].date : null;
+    const today = picks.filter(p => p.date === latestDate);
+    document.getElementById('todayCount').textContent = `${today.length} game${today.length === 1 ? '' : 's'}`;
+    document.getElementById('pickList').innerHTML = today.length ? today.map(p => `
+      <div class="pick-card">
+        <div class="matchup">${p.pick} <span class="spread mono">${fmtSpread(p.pick_spread)}</span></div>
+        <div class="line"><span>${p.team} vs ${p.opp}</span><span class="mono">${p.disagreement > 0 ? '+' : ''}${p.disagreement.toFixed(1)}pt &middot; ${p.stake_units.toFixed(2)}u</span></div>
+      </div>`).join('') : '<div class="chart-empty">No qualifying games right now.</div>';
+
+    document.getElementById('chartCount').textContent = `${graded.length} graded pick${graded.length === 1 ? '' : 's'}`;
+    document.getElementById('chartWrap').innerHTML = graded.length ? buildChart(sorted.filter(p => graded.includes(p))) : '<div class="chart-empty">No graded picks yet — the profit curve will appear here once games are final.</div>';
+
+    document.getElementById('historyCount').textContent = `${picks.length} row${picks.length === 1 ? '' : 's'}`;
+    document.getElementById('historyBody').innerHTML = [...picks].sort((a, b) => b.date.localeCompare(a.date)).map(p => `
+      <tr>
+        <td class="mono">${fmtDate(p.date)}</td>
+        <td>${p.team} vs ${p.opp}</td>
+        <td>${p.pick} <span class="mono">${fmtSpread(p.pick_spread)}</span></td>
+        <td class="num-cell">${p.disagreement > 0 ? '+' : ''}${p.disagreement.toFixed(1)}</td>
+        <td class="num-cell">${(p.stake_units || 1).toFixed(2)}u</td>
+        <td>${p.actual_result || '&mdash;'}</td>
+        <td>${statusChip(p.status || 'PENDING')}</td>
+      </tr>`).join('');
+  }
+
+  function buildChart(points) {
+    const W = 560, H = 200, padL = 8, padR = 8, padT = 14, padB = 20;
+    let cum = 0;
+    const series = points.map(p => (cum += profitOf(p), { x: p.date, y: cum }));
+    const ys = series.map(p => p.y);
+    const yMin = Math.min(0, ...ys), yMax = Math.max(0, ...ys);
+    const yRange = (yMax - yMin) || 1;
+    const xStep = (W - padL - padR) / Math.max(series.length - 1, 1);
+    const xAt = (i) => padL + i * xStep;
+    const yAt = (v) => padT + (H - padT - padB) * (1 - (v - yMin) / yRange);
+
+    const path = series.map((p, i) => `${i === 0 ? 'M' : 'L'} ${xAt(i).toFixed(1)} ${yAt(p.y).toFixed(1)}`).join(' ');
+    const areaPath = `${path} L ${xAt(series.length - 1).toFixed(1)} ${yAt(0).toFixed(1)} L ${xAt(0).toFixed(1)} ${yAt(0).toFixed(1)} Z`;
+    const zeroY = yAt(0).toFixed(1);
+    const last = series[series.length - 1];
+    const lastColor = last.y >= 0 ? 'var(--good)' : 'var(--critical)';
+
+    return `
+      <svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Cumulative profit in units over time">
+        <line x1="${padL}" y1="${zeroY}" x2="${W - padR}" y2="${zeroY}" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 3"/>
+        <path d="${areaPath}" fill="var(--accent)" opacity="0.12"/>
+        <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+        <circle cx="${xAt(series.length - 1).toFixed(1)}" cy="${yAt(last.y).toFixed(1)}" r="4" fill="${lastColor}"/>
+        <text x="${xAt(series.length - 1).toFixed(1)}" y="${(yAt(last.y) - 10).toFixed(1)}" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="12" fill="${lastColor}">${last.y >= 0 ? '+' : ''}${last.y.toFixed(1)}u</text>
+        <text x="${padL}" y="${H - 4}" font-family="Barlow, sans-serif" font-size="10.5" fill="var(--text-muted)">${fmtDate(points[0].date)}</text>
+        <text x="${W - padR}" y="${H - 4}" text-anchor="end" font-family="Barlow, sans-serif" font-size="10.5" fill="var(--text-muted)">${fmtDate(points[points.length - 1].date)}</text>
+      </svg>`;
+  }
+
+  const statusPill = document.getElementById('statusPill');
+  const statusText = document.getElementById('statusText');
+  if (EMBEDDED_PICKS.length) {
+    statusPill.classList.add('live');
+    statusText.textContent = 'Live season data';
+    render(EMBEDDED_PICKS, false);
+  } else {
+    statusText.textContent = 'Season not started';
+    render(EXAMPLE_PICKS, true);
+  }
+})();
+</script>
+</body>
+</html>
