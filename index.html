@@ -170,7 +170,7 @@
     </div>
     <div class="status-block">
       <span class="pill" id="statusPill"><span class="dot"></span><span id="statusText">Checking&hellip;</span></span>
-      <span class="synced-at mono" id="syncedAt">generated 2026-11-02 17:09</span>
+      <span class="synced-at mono" id="syncedAt">generated 2026-11-02 17:13</span>
     </div>
   </header>
 
@@ -266,7 +266,7 @@
   // version), by design: it needs to work with zero dependency on any
   // Claude session being available, since that's not guaranteed once the
   // season starts. Every run of run_daily.py regenerates this file fresh.
-  const EMBEDDED_PICKS = [{"date": "2026-11-02", "team": "Tulane", "opp": "Tennessee Martin", "spread": -6.0, "disagreement": 7.792324637502738, "pick": "Tulane", "pick_spread": -6.0, "stake_units": 2.896162318751369, "status": "PENDING", "actual_result": null}, {"date": "2026-11-02", "team": "Yale", "opp": "Howard", "spread": -7.5, "disagreement": -6.723197558852405, "pick": "Howard", "pick_spread": 7.5, "stake_units": 2.361598779426203, "status": "PENDING", "actual_result": null}, {"date": "2026-11-02", "team": "Miami FL", "opp": "Florida", "spread": 4.5, "disagreement": 5.749747963232321, "pick": "Miami FL", "pick_spread": 4.5, "stake_units": 1.87487398161616, "status": "PENDING", "actual_result": null}, {"date": "2026-11-02", "team": "Marshall", "opp": "Buffalo", "spread": -3.0, "disagreement": -4.712248235201627, "pick": "Buffalo", "pick_spread": 3.0, "stake_units": 1.356124117600813, "status": "PENDING", "actual_result": null}, {"date": "2026-11-02", "team": "Troy", "opp": "Massachusetts", "spread": -2.0, "disagreement": 4.528695481733322, "pick": "Troy", "pick_spread": -2.0, "stake_units": 1.264347740866661, "status": "PENDING", "actual_result": null}, {"date": "2026-11-02", "team": "San Francisco", "opp": "Radford", "spread": -13.5, "disagreement": -4.452835133801164, "pick": "Radford", "pick_spread": 13.5, "stake_units": 1.226417566900582, "status": "PENDING", "actual_result": null}, {"date": "2026-11-02", "team": "Washington St.", "opp": "Davidson", "spread": -3.0, "disagreement": -4.22571504008823, "pick": "Davidson", "pick_spread": 3.0, "stake_units": 1.112857520044115, "status": "PENDING", "actual_result": null}, {"date": "2026-11-02", "team": "James Madison", "opp": "Miami OH", "spread": -1.5, "disagreement": -4.20888138291286, "pick": "Miami OH", "pick_spread": 1.5, "stake_units": 1.10444069145643, "status": "PENDING", "actual_result": null}];
+  const EMBEDDED_PICKS = [];
 
   const EXAMPLE_PICKS = [
     { date: '2026-11-08', team: 'Colorado St.', opp: 'Arizona', spread: 6.5, disagreement: 5.1, pick: 'Colorado St.', pick_spread: 6.5, stake_units: 1.55, status: 'LOSS', actual_result: 'Colorado St. 68 - Arizona 74' },
@@ -444,7 +444,7 @@
       </svg>`;
   }
 
-  const GENERATED_AT_ISO = '2026-11-02T17:09:12.909720';
+  const GENERATED_AT_ISO = '2026-11-02T17:13:21.741067';
   const STALE_HOURS = 36;  // run_daily.py runs once a day -- this allows one missed day before flagging, catches two
 
   const statusPill = document.getElementById('statusPill');
