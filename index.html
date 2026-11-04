@@ -170,7 +170,7 @@
     </div>
     <div class="status-block">
       <span class="pill" id="statusPill"><span class="dot"></span><span id="statusText">Checking&hellip;</span></span>
-      <span class="synced-at mono" id="syncedAt">generated 2026-11-03 11:19</span>
+      <span class="synced-at mono" id="syncedAt">generated 2026-11-04 08:25</span>
     </div>
   </header>
 
@@ -266,7 +266,7 @@
   // version), by design: it needs to work with zero dependency on any
   // Claude session being available, since that's not guaranteed once the
   // season starts. Every run of run_daily.py regenerates this file fresh.
-  const EMBEDDED_PICKS = [];
+  const EMBEDDED_PICKS = [{"date": "2026-11-04", "team": "Butler", "opp": "Fairleigh Dickinson", "spread": -26.5, "disagreement": 4.952935791225237, "pick": "Butler", "pick_spread": -26.5, "stake_units": 1.476467895612618, "status": "PENDING", "actual_result": null}];
 
   const EXAMPLE_PICKS = [
     { date: '2026-11-08', team: 'Colorado St.', opp: 'Arizona', spread: 6.5, disagreement: 5.1, pick: 'Colorado St.', pick_spread: 6.5, stake_units: 1.55, status: 'LOSS', actual_result: 'Colorado St. 68 - Arizona 74' },
@@ -444,7 +444,7 @@
       </svg>`;
   }
 
-  const GENERATED_AT_ISO = '2026-11-03T11:19:48.554435';
+  const GENERATED_AT_ISO = '2026-11-04T08:25:13.604783';
   const STALE_HOURS = 36;  // run_daily.py runs once a day -- this allows one missed day before flagging, catches two
 
   const statusPill = document.getElementById('statusPill');
